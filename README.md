@@ -47,7 +47,9 @@ IR signal                  -->  GPIO15 (D5)
 ```
 ***NOTE**: Panasonic F409M fan doesn't have OSCILLATION LED indicator. The swing state is got by detect the AC voltage on the Swing motor.
 Below AC voltage sensor module works:
-<img src="assets/ac_voltage_sensor.jpg" alt="AC voltage sensor module" height="300"/>
+
+<img src="assets/ac_voltage_sensor.jpg" alt="AC voltage sensor module" height="200"/>
+
 ```
 FAN                 AC voltage sensor module        PCF8575
 --------------      ------------------------        -------
@@ -99,5 +101,6 @@ fan:
 
 ## 🖼️ Screenshots
 
-![panafan1](assets/panafan1.png)
-![panafan2](assets/panafan2.png)
+<img src="assets/panafan1.png" alt="panafan1" height="300"/>
+
+<img src="assets/panafan2.png" alt="panafan2" height="300"/>
