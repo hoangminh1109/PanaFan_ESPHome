@@ -17,7 +17,10 @@ import esphome.config_validation as cv
 from esphome.components import fan, i2c, text_sensor, button, remote_base
 from esphome.const import (
     CONF_OUTPUT_ID,
-    CONF_MODEL
+    CONF_MODEL,
+    CONF_ID,
+    CONF_NAME,
+    CONF_DISABLED_BY_DEFAULT
 )
 
 DEPENDENCIES = ["remote_transmitter", "i2c"]
@@ -52,21 +55,19 @@ CONF_FANTIMER_ID = "fantimer_id"
 CONF_FANSETTIMER_ID = "fansettimer_id"
 CONF_INTERVAL_MS = "interval"
 
-CONFIG_SCHEMA = (
-    fan.FAN_SCHEMA.extend(
-        {
-            cv.GenerateID(CONF_OUTPUT_ID): cv.declare_id(PanaFan),
-            cv.GenerateID(CONF_FANTIMER_ID): cv.declare_id(PanaFanTimer),
-            cv.GenerateID(CONF_FANSETTIMER_ID): cv.declare_id(PanaFanSetTimer),
-            cv.Required(CONF_MODEL): cv.enum(MODELS),
-            cv.Optional(CONF_INTERVAL_MS, default=10): cv.int_range(min=1),
-            cv.Optional(remote_base.CONF_RECEIVER_ID): cv.use_id(remote_base.RemoteReceiverBase),
-        }
-    )
+CONFIG_SCHEMA = (fan.fan_schema(PanaFan).extend({
+        cv.GenerateID(CONF_OUTPUT_ID): cv.declare_id(PanaFan),
+        cv.GenerateID(CONF_FANTIMER_ID): cv.declare_id(PanaFanTimer),
+        cv.GenerateID(CONF_FANSETTIMER_ID): cv.declare_id(PanaFanSetTimer),
+        cv.Required(CONF_MODEL): cv.enum(MODELS),
+        cv.Optional(CONF_INTERVAL_MS, default=10): cv.int_range(min=1),
+        cv.Optional(remote_base.CONF_RECEIVER_ID): cv.use_id(remote_base.RemoteReceiverBase),
+    })
     .extend(cv.COMPONENT_SCHEMA)
     .extend(remote_base.REMOTE_TRANSMITTABLE_SCHEMA)
     .extend(i2c.i2c_device_schema(0x20))
-)
+    )
+
 
 async def to_code(config):
     var = cg.new_Pvariable(config[CONF_OUTPUT_ID])
@@ -77,23 +78,23 @@ async def to_code(config):
     cg.add(var.set_model(config[CONF_MODEL]))
 
     # Fan timer text_sensor
+    fantimer_default_config = { CONF_ID: config[CONF_FANTIMER_ID],
+                                CONF_NAME: "Timer",
+                                CONF_DISABLED_BY_DEFAULT: False}
     fantimer = cg.new_Pvariable(config[CONF_FANTIMER_ID])
-    cg.add(fantimer.set_name("Timer"))
-    cg.add(fantimer.set_object_id("fantimer"))
-    cg.add(fantimer.set_internal(False))
+    await text_sensor.register_text_sensor(fantimer, fantimer_default_config)
+    await cg.register_component(fantimer, fantimer_default_config)
     cg.add(fantimer.set_parent_fan(var))
-    cg.add(cg.App.register_component(fantimer))
-    cg.add(cg.App.register_text_sensor(fantimer))
     cg.add(var.set_fan_timer(fantimer))
 
     # Fan set timer button
+    fansettimer_default_config = { CONF_ID: config[CONF_FANSETTIMER_ID],
+                                CONF_NAME: "Set Timer",
+                                CONF_DISABLED_BY_DEFAULT: False}
     fansettimer = cg.new_Pvariable(config[CONF_FANSETTIMER_ID])
-    cg.add(fansettimer.set_name("Set Timer"))
-    cg.add(fansettimer.set_object_id("fansettimer"))
-    cg.add(fansettimer.set_internal(False))
+    await button.register_button(fansettimer, fansettimer_default_config)
+    await cg.register_component(fansettimer, fansettimer_default_config)
     cg.add(fansettimer.set_parent_fan(var))
-    cg.add(cg.App.register_component(fansettimer))
-    cg.add(cg.App.register_button(fansettimer))
     cg.add(var.set_fan_settimer(fansettimer))
 
     cg.add(var.set_interval_ms(config[CONF_INTERVAL_MS]))
